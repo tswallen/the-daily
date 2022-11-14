@@ -5,13 +5,17 @@ import unittest
 
 class QuotesTestSuite(unittest.TestCase):
 
-    quotes = daily.Quotes('https://www.goodreads.com/author/quotes/2622245.Lao_Tzu')
+    quotes = daily.Quotes('https://www.goodreads.com/author/quotes/2622245.Lao_Tzu', 'Lao Tzu')
 
     def test_get_pages_count(self):
         self.assertIsNotNone(self.quotes.get_pages_count())
     
-    def test_get_quotes(self):
-        self.assertIsNotNone(self.quotes.get_quotes())
+    #@unittest.skip
+    def test_log_quotes(self):
+        self.assertIsNone(self.quotes.log_quotes())
+
+    def test_get_quote(self):
+        self.assertIsNotNone(self.quotes.get_quote())
 
 
 if __name__ == '__main__':

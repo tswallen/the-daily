@@ -3,10 +3,16 @@ import requests
 import re
 import logging
 from logging import INFO, DEBUG, ERROR
+from pymongo import MongoClient
+from pymongo.collection import Collection
+from os import environ
 
+from .classes.quote import Quote
 class Quotes:
-    def __init__(self, url: str):
+    def __init__(self, url: str, author: str):
+        self.mongo: Collection = MongoClient(environ["MONGO_URL"])['daily']['quotes']
         self.url: str = url
+        self.author: str = author
         self.pages = self.get_pages_count()
         self.quotes = []
 
@@ -15,16 +21,37 @@ class Quotes:
         soup = BeautifulSoup(requests.get(self.url).content, 'html.parser')
         return int(soup.find(class_ = 'next_page').find_previous_sibling('a').get_text())
     
-    # TODO: log quotes to database
-    def get_quotes(self):
+    def log_quotes(self):
         '''Get all quotes from the url'''
         for i in range(self.pages - 1):
             logging.log(INFO, f'Getting quotes from page {i + 1} of {self.pages}')
-            print(f'Getting quotes from page {i + 1} of {self.pages}')
             soup = BeautifulSoup(requests.get(f'{self.url}?page={i}').content, 'html.parser')
             for quote in soup.find_all(class_ = 'quoteText'):
                 match = re.search(r'.*?\“(.*)”.*', quote.getText('|'))
                 if match is not None:
-                    self.quotes.append(match.group(1).replace('|', '\n'))
-        logging.log(INFO ,f'Got {len(self.quotes)} quotes')
-        return self.quotes
+                    self.mongo.insert_one(self.to_quote({'body': match.group(1).replace('|', '\n'), 'author': self.author}).__dict__)
+
+    def get_quote(self):
+        '''
+        Returns a random quote
+        
+                Returns:
+                        quote (Quote): A random quote
+        '''
+        print(list(self.mongo.aggregate([{ '$sample': { 'size': 1 } }]))[0])
+        return self.to_quote(list(self.mongo.aggregate([{ '$sample': { 'size': 1 } }]))[0])
+
+    def to_quote(self, quote: dict):
+        '''
+        Converts a quote into the Quote class
+
+                Parameters:
+                        quote (dict): The quote
+
+                Returns:
+                        quote (Quote): A proper instance of the Quote class
+        '''
+        return Quote(
+            body = quote['body'],
+            author = quote['author']
+        )
