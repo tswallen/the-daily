@@ -10,7 +10,6 @@ class QuotesTestSuite(unittest.TestCase):
     def test_get_pages_count(self):
         self.assertIsNotNone(self.quotes.get_pages_count())
     
-    #@unittest.skip
     def test_log_quotes(self):
         self.assertIsNone(self.quotes.log_quotes())
 

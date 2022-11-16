@@ -14,7 +14,6 @@ class Quotes:
         self.url: str = url
         self.author: str = author
         self.pages = self.get_pages_count()
-        self.quotes = []
 
     def get_pages_count(self):
         '''Get the number of pages of quotes'''

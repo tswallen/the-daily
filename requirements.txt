@@ -1,2 +1,7 @@
 nose
 sphinx
+pymongo
+websocket
+py3-pinterest
+praw
+beautifulsoup4

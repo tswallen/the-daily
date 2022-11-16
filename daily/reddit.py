@@ -1,29 +1,53 @@
-import praw
 
-import pandas as pd
+from praw import Reddit as Praw
+import logging
+from logging import INFO, DEBUG, ERROR
+from pymongo import MongoClient
+from pymongo.collection import Collection
+from os import environ
 
-# Reddit app API details
-reddit = praw.Reddit(
-    client_id="ir1bN_Ib7NpTcvFQbg5R2A",
-    client_secret="FiDLvgz-XzBlBPuZjA5Putc6DrJmWw",
-    password="Alfie_0101",
-    user_agent="Codex_Data_",
-    username="Codex_Data_",
-)
+class Reddit:
+    def __init__(self, target_subreddits: list = [], max_posts: int = 10):
+        self.mongo: Collection = MongoClient(environ["MONGO_URL"])['daily']['reddit']
+        self.reddit = Praw(
+            client_id = environ["REDDIT_CLIENT_ID"],
+            client_secret = environ["REDDIT_CLIENT_SECRET"],
+            password = environ["REDDIT_PASSWORD"],
+            user_agent = environ["REDDIT_USERAGENT"],
+            username = environ["REDDIT_USERNAME"],
+        )
+        self.target_subreddits = target_subreddits
+        self.max_posts = max_posts
 
-# Print USERNAME to test functionality
-print(reddit.user.me())
+    
+    def log_posts(self):
+        '''Get all posts from the target subreddits'''
+        for subreddit in self.target_subreddits:
+            for post in self.reddit.subreddit(subreddit).hot(limit = self.max_posts):
+                self.mongo.insert_one({'title': post.title, 'url': post.url})
 
-posts = []
-# change 'MachineLearning' to name of desired subreddit
-ml_subreddit = reddit.subreddit('MachineLearning')
+    def get_posts(self, ammount: int = 5):
+        '''
+        Returns an array of random posts
 
-# ml_subreddit.hot(limit=10) scrapes the top 10 hottest posts from the chosen subreddit
-for post in ml_subreddit.hot(limit=10):
-    posts.append([post.title, post.score, post.id, post.subreddit, post.url, post.num_comments, post.selftext, post.created])
+                Parameters:
+                        ammount (int): The number of posts to return
+                Returns:
+                        posts (list): An array of posts
+        '''
+        return list(self.mongo.aggregate([{ '$sample': { 'size': ammount } }]))
 
-# strangely i got append to work. Go Figure. The below creates and prints a DF, which can be transferred to a csv using the function whiich is hashed out
-posts = pd.DataFrame(posts,columns=['title', 'score', 'id', 'subreddit', 'url', 'num_comments', 'body', 'created'])
-print(posts)
+    # TODO: create a reddit post class
+    # def to_post(self, post: dict):
+    #     '''
+    #     Converts a post into the Post class
 
-# posts.to_csv("Posts")
+    #             Parameters:
+    #                     post (dict): The post
+
+    #             Returns:
+    #                     post (Post): A proper instance of the Post class
+    #     '''
+    #     return Post(
+    #         url = post['url']
+    #     )
