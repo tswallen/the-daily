@@ -9,6 +9,9 @@ from pymongo.collection import Collection
 from os import environ
 
 from _thread import start_new_thread
+
+from .classes.message import Message
+
 class Discord:
     def __init__(self, token: str = environ["DISCORD_TOKEN"]):
         self.mongo: Collection = MongoClient(environ["MONGO_URL"])['daily']['discord']
@@ -16,9 +19,9 @@ class Discord:
         self.websocket: WebSocket = WebSocket()
         self.websocket.connect('wss://gateway.discord.gg/?v=6&encoding=json')
         self.event = self.receive_json_response()
+        self.heartbeat_interval = self.event['d']['heartbeat_interval']/1000
 
-        heartbeat_interval = self.event['d']['heartbeat_interval']/1000
-        start_new_thread(self.heartbeat, (heartbeat_interval, self.websocket))
+        start_new_thread(self.heartbeat, ())
         self.send_json_request({
             'op' : 2,
             'd':{
@@ -41,10 +44,18 @@ class Discord:
         while True:
             event = self.receive_json_response()
             try:
-                print(f"{event['d']['author']['username']}: {event['d']['content']}:\n:{event['d']['attachments']}")
-                op_code = event('op')
-                if op_code == 11:
-                    print('heartbeat recveived')
+                if media_only and (len(event['d']['attachments']) > 0):
+                    for attachment in event['d']['attachments']:
+                        self.mongo.insert_one({
+                            'author': event['d']['author']['username'],
+                            'media': attachment['url']
+                        })
+                elif not media_only:
+                    self.mongo.insert_one({
+                        'author': event['d']['author']['username'],
+                        'media': str(event['d']['attachments']),
+                        'content': str(event['d']['content'])
+                    })
             except:
                 pass
 
@@ -62,14 +73,23 @@ class Discord:
         if response:
             return json.loads(response)
 
-    # This starts the "heartbeat" or the initial connection to the discord server
-    def heartbeat(self, interval, websocket): # TODO: does removing websocket break this?
-        print('Heartbeat begin')
+    def heartbeat(self):
         while True:
-            time.sleep(interval)
-            heartbeatJSON = {
-                "op": 1,
-                "d": 'null'
-            }
-            self.send_json_request(heartbeatJSON)
-            print("Heartbeat Sent")
+            time.sleep(self.heartbeat_interval) # TODO: move to end?
+            self.send_json_request({'op': 1, 'd': 'null'})
+
+    def to_message(self, message: dict):
+        '''
+        Converts a message into the Message class
+
+                Parameters:
+                        message (dict): The message
+
+                Returns:
+                        message (Message): A proper instance of the Message class
+        '''
+        return Message(
+            author = message['author'],
+            media = message['media'],
+            content = message['content']
+        )
