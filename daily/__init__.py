@@ -9,3 +9,4 @@ from .quotes import Quotes
 from .discord import Discord
 from .pinterest import Pinterest
 from .reddit import Reddit
+from .chrome import Chrome

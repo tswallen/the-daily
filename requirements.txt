@@ -5,3 +5,6 @@ websocket
 py3-pinterest
 praw
 beautifulsoup4
+selenium
+webdriver-manager
+pandas
