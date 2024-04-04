@@ -29,16 +29,16 @@ class Pinterest:
                     if 'images' in pin:
                         self.mongo.insert_one(self.to_post({'url': pin['images']['orig']['url']}).__dict__)
 
-    def get_posts(self, ammount: int = 5):
+    def get_posts(self, amount: int = 5):
         '''
         Returns an array of random posts
 
                 Parameters:
-                        ammount (int): The number of posts to return
+                        amount (int): The number of posts to return
                 Returns:
                         posts (list): An array of posts
         '''
-        return list(self.mongo.aggregate([{ '$sample': { 'size': ammount } }]))
+        return list(self.mongo.aggregate([{ '$sample': { 'size': amount } }]))
 
     def to_post(self, post: dict):
         '''

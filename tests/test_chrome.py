@@ -7,17 +7,21 @@ class ChromeQuotesTestSuite(unittest.TestCase):
 
     chrome = daily.Chrome()
 
-    # def test_print_first_three_tab_urls(self):
-    #     self.assertIsNotNone(self.chrome.print_first_three_tab_urls())
+    def test_log_bookmarks(self):
+        self.assertIsNone(self.chrome.log_bookmarks(2))
+        documents = list(self.chrome.mongo.find({}))
+        self.assertIsNotNone(documents) # Assumes we have bookmarks
+        self.assertIsInstance(documents, list)
 
-    # def test_screenshot_first_tab(self):
-    #     self.assertIsNone(self.chrome.screenshot_first_tab())
+    def test_get_bookmarks(self):
+        bookmarks = self.chrome.get_bookmarks(1)
+        self.assertIsNotNone(bookmarks) # Assumes we have bookmarks
+        self.assertIsInstance(bookmarks, list)
+        self.assertIsInstance(bookmarks[0], daily.Bookmark)
+        self.assertIsNotNone(bookmarks[0].screenshot)
 
-    # def test_capture_tabs_info(self):
-    #     self.assertIsNotNone(self.chrome.capture_tabs_info())
-
-    def test_find_bookmarks_in_nested_folder(self):
-        self.assertIsNotNone(self.chrome.find_bookmarks_in_nested_folder())
+    # def test_clear_bookmarks(self):
+    #     self.chrome.mongo.delete_many({})
 
 if __name__ == '__main__':
     unittest.main()

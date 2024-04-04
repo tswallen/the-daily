@@ -26,16 +26,16 @@ class Reddit:
             for post in self.reddit.subreddit(subreddit).hot(limit = self.max_posts):
                 self.mongo.insert_one({'title': post.title, 'url': post.url})
 
-    def get_posts(self, ammount: int = 5):
+    def get_posts(self, amount: int = 5):
         '''
         Returns an array of random posts
 
                 Parameters:
-                        ammount (int): The number of posts to return
+                        amount (int): The number of posts to return
                 Returns:
                         posts (list): An array of posts
         '''
-        return list(self.mongo.aggregate([{ '$sample': { 'size': ammount } }]))
+        return list(self.mongo.aggregate([{ '$sample': { 'size': amount } }]))
 
     # TODO: create a reddit post class
     # def to_post(self, post: dict):
