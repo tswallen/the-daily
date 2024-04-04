@@ -46,12 +46,13 @@ class Chrome:
             bookmarks_list.extend(find_folder(root_bookmarks, folder_path.copy()))
 
         bookmarks = [{'title': bookmark['name'], 'url': bookmark['url']} for bookmark in bookmarks_list[:amount if amount is not None else len(bookmarks_list)] if bookmark.get('type') == 'url']        
+        bookmarks = [to_bookmark(bookmark) for bookmark in bookmarks]
         
         logging.info(f'Logging {len(bookmarks)} bookmark(s)...')
         
-        self.mongo.insert_many(bookmarks)
+        self.mongo.insert_many([bookmark.__dict__ for bookmark in bookmarks])
 
-    def get_bookmarks(self, amount: int = None) -> List[Bookmark]:
+    def get_bookmarks(self, amount: int = 1) -> List[Bookmark]:
         '''
         Returns an array of bookmarks
 
