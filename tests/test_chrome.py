@@ -3,7 +3,7 @@ from .context import daily
 import unittest
 
 
-class ChromeQuotesTestSuite(unittest.TestCase):
+class ChromeTestSuite(unittest.TestCase):
 
     chrome = daily.Chrome()
 
