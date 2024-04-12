@@ -21,16 +21,16 @@ class Tasks:
         self.mongo: Collection = MongoClient(environ["MONGO_URL"])['daily']['tasks']
         self.credentials = None
         if os.path.exists("token.json"):
-            self.credentials = Credentials.from_authorized_user_file("token.json", SCOPES)
+            self.credentials = Credentials.from_authorized_user_file("data/token.json", SCOPES)
         if not self.credentials or not self.credentials.valid:
             if self.credentials and self.credentials.expired and self.credentials.refresh_token:
                 self.credentials.refresh(Request())
             else:
                 flow = InstalledAppFlow.from_client_secrets_file(
-                    "credentials.json", SCOPES
+                    "data/credentials.json", SCOPES
                 )
                 self.credentials = flow.run_local_server(port=0)
-            with open("token.json", "w") as token:
+            with open("data/token.json", "w") as token:
                 token.write(self.credentials.to_json())
         self.service = build("tasks", "v1", credentials = self.credentials)
     

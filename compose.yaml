@@ -1,0 +1,27 @@
+services:
+  the-daily:
+    build: .
+    volumes:
+      - .:/code
+    depends_on:
+      - selenium-chrome
+      - mongo
+    env_file:
+      - .env
+
+  selenium-chrome:
+    image: selenium/standalone-chrome:latest
+    ports:
+      - "4444:4444"
+    volumes:
+      - /dev/shm:/dev/shm
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:

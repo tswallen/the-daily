@@ -23,7 +23,8 @@ class Chrome:
                         bookmarks (list): An array of bookmarks
         '''
 
-        bookmarks_file = Path.home() / Path("AppData\\Local\\Google\\Chrome\\User Data\\Default\\Bookmarks")
+        #bookmarks_file = Path.home() / Path("AppData\\Local\\Google\\Chrome\\User Data\\Default\\Bookmarks")
+        bookmarks_file = Path.cwd() / 'data' / 'Bookmarks'
         folder_path = environ.get('CHROME_BOOKMARKS_PATH').split('/')
 
         logging.info(f'Reading bookmarks from {bookmarks_file}...')
@@ -47,6 +48,8 @@ class Chrome:
 
         bookmarks = [{'title': bookmark['name'], 'url': bookmark['url']} for bookmark in bookmarks_list[:amount if amount is not None else len(bookmarks_list)] if bookmark.get('type') == 'url']        
         bookmarks = [to_bookmark(bookmark) for bookmark in bookmarks]
+
+        print(bookmarks[0].screenshot)
         
         logging.info(f'Logging {len(bookmarks)} bookmark(s)...')
         

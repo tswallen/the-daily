@@ -1,7 +1,17 @@
 from bson.binary import Binary
-from selenium import webdriver
+#from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium import webdriver
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+
+# Specify the URL of your Selenium Standalone Chrome container
+
+
+# Connect to the remote WebDriver
+
+
 
 # TODO: keep these?
 # service = Service(ChromeDriverManager().install())
@@ -20,8 +30,19 @@ class Bookmark:
                 Returns:
                         screenshot (Binary): A binary representation of the screenshot
         '''
-        service = Service(ChromeDriverManager().install())
-        driver = webdriver.Chrome(service = service)
+        #service = Service(ChromeDriverManager().install())
+        #driver = webdriver.Chrome(service = service)
+        selenium_url = 'http://selenium-chrome:4444/wd/hub'  # Adjust this as necessary
+
+        # Set up Chrome options
+        chrome_options = ChromeOptions()
+        # Add any Chrome-specific options here, e.g., chrome_options.add_argument('--headless')
+
+        # Connect to the remote WebDriver
+        driver = webdriver.Remote(
+            command_executor=selenium_url,
+            options=chrome_options
+        )
         try:
             driver.get(self.url)
             screenshot_data = driver.get_screenshot_as_png()
