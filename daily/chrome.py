@@ -20,7 +20,7 @@ class Chrome:
                 Parameters:
                         amount (int): The number of bookmarks to log
                 Returns:
-                        posts (list): An array of bookmarks
+                        bookmarks (list): An array of bookmarks
         '''
 
         bookmarks_file = Path.home() / Path("AppData\\Local\\Google\\Chrome\\User Data\\Default\\Bookmarks")

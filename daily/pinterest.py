@@ -6,11 +6,11 @@ from pymongo.collection import Collection
 from py3pin.Pinterest import Pinterest as Py3pin
 from os import environ
 
-from .classes.post import Post, to_post
+from .classes.pin import Pin, to_pin
 
 class Pinterest:
-    def __init__(self, target_boards: list = [], max_posts: int = 100):
-        self.max_posts = max_posts
+    def __init__(self, target_boards: list = [], max_pins: int = 100):
+        self.max_pins = max_pins
         self.target_boards = target_boards
         self.mongo: Collection = MongoClient(environ["MONGO_URL"])['daily']['pinterest']
         self.pinterest = Py3pin(email = environ['PINTEREST_EMAIL'],
@@ -20,28 +20,28 @@ class Pinterest:
         self.pinterest.login(headless = False)
         self.boards = self.pinterest.boards()
     
-    def log_posts(self): # TODO: add an amount limit here
-        '''Get all posts from the target boards'''
+    def log_pins(self): # TODO: add an amount limit here
+        '''Get all pins from the target boards'''
         for board in self.boards:
             if board['name'] in self.target_boards:
-                logging.info(f'Getting posts from {board["name"]}...')
+                logging.info(f'Getting pins from {board["name"]}...')
                 rec_pins = []
                 rec_batch = self.pinterest.board_recommendations(board_id = board['id'])
-                while len(rec_batch) > 0 and len(rec_pins) < self.max_posts:
+                while len(rec_batch) > 0 and len(rec_pins) < self.max_pins:
                     rec_pins += rec_batch
                 for pin in rec_pins:
                     if 'images' in pin:
-                        self.mongo.insert_one(to_post({'id': pin['id'], 'title': pin['grid_title'], 'url': pin['link'], 'image': pin['images']['orig']['url']}).__dict__)
+                        self.mongo.insert_one(to_pin({'id': pin['id'], 'title': pin['grid_title'], 'url': pin['link'], 'image': pin['images']['orig']['url']}).__dict__)
 
-    def get_posts(self, amount: int = 5) -> List[Post]:
+    def get_pins(self, amount: int = 5) -> List[Pin]:
         '''
-        Returns an array of posts
+        Returns an array of pins
 
                 Parameters:
-                        amount (int): The number of posts to get
+                        amount (int): The number of pins to get
                 Returns:
-                        posts (List[Post] | None): An array of posts returned from Mongo expressed as an instance of the Post class
+                        pins (List[Pin] | None): An array of pins returned from Mongo expressed as an instance of the Pin class
         '''
-        posts = list(self.mongo.aggregate([{ '$sample': { 'size': amount } }]))
-        logging.info(f'Getting {len(posts)} post(s)...')
-        return [to_post(post) for post in posts]
+        pins = list(self.mongo.aggregate([{ '$sample': { 'size': amount } }]))
+        logging.info(f'Getting {len(pins)} pin(s)...')
+        return [to_pin(pin) for pin in pins]

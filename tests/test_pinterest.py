@@ -7,17 +7,17 @@ class PinterestTestSuite(unittest.TestCase):
 
     pinterest = daily.Pinterest(['Travel'])
 
-    def test_log_posts(self):
-        self.assertIsNone(self.pinterest.log_posts())
+    def test_log_pins(self):
+        self.assertIsNone(self.pinterest.log_pins())
         documents = list(self.pinterest.mongo.find({}))
-        self.assertIsNotNone(documents) # Assumes we have posts
+        self.assertIsNotNone(documents) # Assumes we have pins
         self.assertIsInstance(documents, list)
 
-    def test_get_posts(self):
-        posts = self.pinterest.get_posts()
-        self.assertIsNotNone(posts) # Assumes we have posts
-        self.assertIsInstance(posts, list)
-        self.assertIsInstance(posts[0], daily.Post)
+    def test_get_pins(self):
+        pins = self.pinterest.get_pins()
+        self.assertIsNotNone(pins) # Assumes we have pins
+        self.assertIsInstance(pins, list)
+        self.assertIsInstance(pins[0], daily.Pin)
 
 if __name__ == '__main__':
     unittest.main()

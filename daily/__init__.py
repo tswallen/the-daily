@@ -4,6 +4,7 @@ load_dotenv()
 
 from .classes.bookmark import Bookmark, to_bookmark
 from .classes.message import Message
+from .classes.pin import Pin
 from .classes.post import Post
 from .classes.quote import Quote
 
