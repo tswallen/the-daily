@@ -22,8 +22,9 @@ class Chrome:
                 Returns:
                         bookmarks (list): An array of bookmarks
         '''
-
-        bookmarks_file = Path.home() / Path("AppData\\Local\\Google\\Chrome\\User Data\\Default\\Bookmarks")
+        # TODO: make this run a check
+        # bookmarks_file = Path.home() / Path("AppData\\Local\\Google\\Chrome\\User Data\\Default\\Bookmarks")
+        bookmarks_file = Path.cwd() / 'data' / 'Bookmarks'
         folder_path = environ.get('CHROME_BOOKMARKS_PATH').split('/')
 
         logging.info(f'Reading bookmarks from {bookmarks_file}...')
@@ -52,7 +53,7 @@ class Chrome:
         
         self.mongo.insert_many([bookmark.__dict__ for bookmark in bookmarks])
 
-    def get_bookmarks(self, amount: int = 1) -> List[Bookmark]:
+    def get_bookmarks(self, with_screenshot: bool = False, amount: int = 2) -> List[Bookmark]:
         '''
         Returns an array of bookmarks
 
@@ -62,5 +63,15 @@ class Chrome:
                         bookmarks (List[Bookmark] | None): An array of bookmarks returned from Mongo expressed as an instance of the Bookmark class
         '''
         bookmarks = list(self.mongo.aggregate([{ '$sample': { 'size': amount } }]))
+        
+        if with_screenshot:
+            for i, bookmark in enumerate(bookmarks):
+                _id = bookmark['_id']
+                bookmark = to_bookmark(bookmark)
+                if bookmark.screenshot is None:
+                    bookmark.screenshot = bookmark.capture_screenshot()
+                    bookmarks[i]['screenshot'] = bookmark.screenshot
+                    self.mongo.update_one({'_id': _id}, {'$set': {'screenshot': bookmark.screenshot}})
+
         logging.info(f'Getting {len(bookmarks)} bookmark(s)...')
         return [to_bookmark(bookmark) for bookmark in bookmarks]

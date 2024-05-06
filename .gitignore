@@ -128,4 +128,8 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# TODO: find a better home for these
 /credentials
+credentials.json
+token.json
+data/Bookmarks

@@ -44,13 +44,23 @@ class Tasks:
                         tasks (list): An array of tasks
         '''
 
-        tasklists = self.service.tasklists().list(maxResults = 10).execute().get("items", [])
+        tasklists = self.service.tasklists().list(maxResults = amount).execute().get("items", [])
         tasks = []
         for tasklist in tasklists:
-            t = self.service.tasks().list(tasklist=tasklist['id'], maxResults=10).execute().get("items", [])
-            tasks.extend(t)
+            t = self.service.tasks().list(tasklist=tasklist['id'], maxResults = amount).execute()
+            _t = t.get("items", [])
+            tasks.extend(_t)
 
-        tasks = [{'id': task['id'], 'title': task['title'], 'duedate': task.get('due', None), 'status': task['status']} for task in tasks]        
+        # tasklists = self.service.tasklists().list().execute().get("items", [])
+        # tasks = []
+        # for tasklist in tasklists:
+        #     print(tasklist['id'])
+        #     t = self.service.tasks().list(tasklist = tasklist['id']).execute().get("items", [])
+        #     print(len(t))
+        #     tasks.extend(t)
+        print(len(tasks))
+        tasks = [{'id': task['id'], 'title': task['title'], 'duedate': task.get('due', None), 'status': task['status']} for task in tasks]
+        print(len(tasks))   
         tasks = [to_task(task) for task in tasks]
         
         logging.info(f'Logging {len(tasks)} task(s)...')

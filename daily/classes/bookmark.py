@@ -11,7 +11,8 @@ class Bookmark:
     def __init__(self, title: str, url: str, screenshot: Binary | bytes | None): # Might need to change to bytes
         self.title = title
         self.url = url
-        self.screenshot = screenshot if screenshot is not None else self.capture_screenshot()
+        #self.screenshot = screenshot if screenshot is not None else self.capture_screenshot()
+        self.screenshot = screenshot
 
     def capture_screenshot(self) -> Binary:
         '''
