@@ -14,6 +14,8 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
+from datetime import datetime
+
 SCOPES = ["https://www.googleapis.com/auth/tasks.readonly"]
 
 class Tasks:
@@ -34,7 +36,7 @@ class Tasks:
                 token.write(self.credentials.to_json())
         self.service = build("tasks", "v1", credentials = self.credentials)
     
-    def log_tasks(self, amount: int = None):
+    def log_tasks(self):
         '''
         Logs all tasks to Mongo
 
@@ -44,25 +46,21 @@ class Tasks:
                         tasks (list): An array of tasks
         '''
 
-        tasklists = self.service.tasklists().list(maxResults = amount).execute().get("items", [])
+        tasklists = self.service.tasklists().list().execute().get("items", [])
+        logging.info(f'Logging {len(tasklists)} tasklist(s)...')
         tasks = []
         for tasklist in tasklists:
-            t = self.service.tasks().list(tasklist=tasklist['id'], maxResults = amount).execute()
-            _t = t.get("items", [])
-            tasks.extend(_t)
+            logging.info(f'Logging tasks from {tasklist["title"]}...')
+            _tasks = self.service.tasks()
+            request = _tasks.list(tasklist = tasklist['id'])
+            while request is not None:
+                _tasks_doc = request.execute()
+                tasks.extend([{**item, 'tasklist_id': tasklist['id']} for item in _tasks_doc.get("items", [])])
+                request = _tasks.list_next(request, _tasks_doc)
 
-        # tasklists = self.service.tasklists().list().execute().get("items", [])
-        # tasks = []
-        # for tasklist in tasklists:
-        #     print(tasklist['id'])
-        #     t = self.service.tasks().list(tasklist = tasklist['id']).execute().get("items", [])
-        #     print(len(t))
-        #     tasks.extend(t)
-        print(len(tasks))
-        tasks = [{'id': task['id'], 'title': task['title'], 'duedate': task.get('due', None), 'status': task['status']} for task in tasks]
-        print(len(tasks))   
+        tasks = [{'id': task['id'], 'title': task['title'], 'date': datetime.fromisoformat(task['updated'].replace("Z", "+00:00")), 'tasklist_id': task['tasklist_id'], 'duedate': task.get('due', None), 'status': task['status']} for task in tasks]
         tasks = [to_task(task) for task in tasks]
-        
+
         logging.info(f'Logging {len(tasks)} task(s)...')
         
         self.mongo.insert_many([task.__dict__ for task in tasks])
