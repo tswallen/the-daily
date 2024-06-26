@@ -74,6 +74,7 @@ class Tasks:
                 Returns:
                         tasks (List[Task] | None): An array of tasks returned from Mongo expressed as an instance of the Task class
         '''
-        tasks = list(self.mongo.aggregate([{ '$sample': { 'size': amount } }]))
+        # tasks = list(self.mongo.aggregate([{ '$sample': { 'size': amount } }]))
+        tasks = list(self.mongo.find().limit(amount))
         logging.info(f'Getting {len(tasks)} task(s)...')
         return [to_task(task) for task in tasks]

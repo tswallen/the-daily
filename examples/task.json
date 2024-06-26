@@ -1,0 +1,13 @@
+{
+    "kind": "tasks#task",
+    "id": "1234567890abcdefghijkl",
+    "etag": "\"1234567890abcd\"",
+    "title": "This is a Task",
+    "updated": "2000-01-01T00:00:00.000Z",
+    "selfLink": "https://www.googleapis.com/tasks/v1/lists/1234567890abcdefghijklmnopqrstuv/tasks/1234567890abcdefghijkl",
+    "position": "00000000000000000000",
+    "status": "needsAction",
+    "links": [],
+    "webViewLink": "https://tasks.google.com/task/1234567abc-12abc",
+    "tasklist_id": "1234567890abcdefghijklmnopqrstuv"
+}
