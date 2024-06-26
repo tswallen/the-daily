@@ -8,6 +8,8 @@ from os import environ
 
 from .classes.pin import Pin, to_pin
 
+from .utils import log_raw
+
 class Pinterest:
     def __init__(self, target_boards: list = [], max_pins: int = 100):
         self.max_pins = max_pins
@@ -31,6 +33,21 @@ class Pinterest:
                     rec_pins += rec_batch
                 for pin in rec_pins:
                     if 'images' in pin:
+                        log_raw('pinterest_raw', pin)
+                        self.mongo.insert_one(to_pin({'id': pin['id'], 'title': pin['grid_title'], 'url': pin['link'], 'image': pin['images']['orig']['url']}).__dict__)
+
+    def log_my_pins(self): # TODO: add an amount limit here
+        '''Get all pins from the target boards'''
+        for board in self.boards:
+            if board['name'] in self.target_boards:
+                logging.info(f'Getting pins from {board["name"]}...')
+                rec_pins = []
+                rec_batch = self.pinterest.board_recommendations(board_id = board['id'])
+                while len(rec_batch) > 0 and len(rec_pins) < self.max_pins:
+                    rec_pins += rec_batch
+                for pin in rec_pins:
+                    if 'images' in pin:
+                        log_raw('pinterest_raw', pin)
                         self.mongo.insert_one(to_pin({'id': pin['id'], 'title': pin['grid_title'], 'url': pin['link'], 'image': pin['images']['orig']['url']}).__dict__)
 
     def get_pins(self, amount: int = 5) -> List[Pin]:

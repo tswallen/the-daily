@@ -9,6 +9,8 @@ from pathlib import Path
 
 from .classes.bookmark import Bookmark, to_bookmark
 
+from .utils import log_raw
+
 class Chrome:
     def __init__(self):
         self.mongo: Collection = MongoClient(environ["MONGO_URL"])['daily']['chrome']
@@ -46,6 +48,9 @@ class Chrome:
             root_bookmarks = bookmarks_data['roots'].get(root_key, {}).get('children', [])
             bookmarks_list.extend(find_folder(root_bookmarks, folder_path.copy()))
 
+        for bookmark in bookmarks_list:
+            log_raw('chrome_raw', bookmark)
+        
         bookmarks = [{'title': bookmark['name'], 'url': bookmark['url']} for bookmark in bookmarks_list[:amount if amount is not None else len(bookmarks_list)] if bookmark.get('type') == 'url']        
         bookmarks = [to_bookmark(bookmark) for bookmark in bookmarks]
         

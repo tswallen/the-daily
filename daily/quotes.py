@@ -13,6 +13,8 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
 }
 
+from .utils import log_raw
+
 class Quotes:
     def __init__(self, url: str, author: str):
         self.mongo: Collection = MongoClient(environ["MONGO_URL"])['daily']['quotes']
@@ -33,6 +35,7 @@ class Quotes:
             for quote in soup.find_all(class_ = 'quoteText'):
                 match = re.search(r'.*?\“(.*)”.*', quote.getText('|'))
                 if match is not None:
+                    log_raw('quotes_raw', match)
                     self.mongo.insert_one(self.to_quote({'body': match.group(1).replace('|', '\n'), 'author': self.author}).__dict__)
 
     def get_quote(self):

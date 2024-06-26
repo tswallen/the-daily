@@ -9,6 +9,8 @@ from os import environ
 
 from .classes.post import Post, to_post
 
+from .utils import log_raw
+
 class Reddit:
     def __init__(self, target_subreddits: list = []):
         self.mongo: Collection = MongoClient(environ["MONGO_URL"])['daily']['reddit']
@@ -43,6 +45,7 @@ class Reddit:
 
         for subreddit in self.target_subreddits:
             for post in self.reddit.subreddit(subreddit).hot(limit = amount):
+                log_raw('reddit_raw', post)
                 self.mongo.insert_one(to_post({'title': post.title, 'url': post.url}).__dict__)
 
     def get_posts(self, amount: int = 5) -> List[Post]:

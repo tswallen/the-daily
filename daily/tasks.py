@@ -1,6 +1,6 @@
 import logging
 from typing import List
-from pymongo import MongoClient
+from pymongo import MongoClient, errors
 from pymongo.collection import Collection
 
 from os import environ
@@ -18,9 +18,12 @@ from datetime import datetime
 
 SCOPES = ["https://www.googleapis.com/auth/tasks.readonly"]
 
+from .utils import log_raw
+
 class Tasks:
     def __init__(self):
         self.mongo: Collection = MongoClient(environ["MONGO_URL"])['daily']['tasks']
+        'id_1' not in self.mongo.index_information() and self.mongo.create_index([('id', 1)], unique=True)
         self.credentials = None
         if os.path.exists("token.json"):
             self.credentials = Credentials.from_authorized_user_file("token.json", SCOPES)
@@ -55,15 +58,27 @@ class Tasks:
             request = _tasks.list(tasklist = tasklist['id'])
             while request is not None:
                 _tasks_doc = request.execute()
+                print(_tasks_doc)
                 tasks.extend([{**item, 'tasklist_id': tasklist['id']} for item in _tasks_doc.get("items", [])])
                 request = _tasks.list_next(request, _tasks_doc)
+
+        # for task in tasks:
+        #     log_raw('tasks_raw', task)
 
         tasks = [{'id': task['id'], 'title': task['title'], 'date': datetime.fromisoformat(task['updated'].replace("Z", "+00:00")), 'tasklist_id': task['tasklist_id'], 'duedate': task.get('due', None), 'status': task['status']} for task in tasks]
         tasks = [to_task(task) for task in tasks]
 
-        logging.info(f'Logging {len(tasks)} task(s)...')
+        # logging.info(f'Logging {len(tasks)} task(s)...')
         
-        self.mongo.insert_many([task.__dict__ for task in tasks])
+        # try:
+        #     self.mongo.insert_many([task.__dict__ for task in tasks], ordered = False)
+        #     print("Documents inserted, ignoring duplicates.")
+        # except errors.BulkWriteError as e:
+        #     print("Bulk write operation completed with errors.")
+        #     for error in e.details['writeErrors']:
+        #         print(f"Error: {error['errmsg']} on index {error['index']}")
+                        
+        #self.mongo.insert_many([task.__dict__ for task in tasks])
 
     def get_tasks(self, amount: int = 1) -> List[Task]:
         '''
@@ -74,6 +89,7 @@ class Tasks:
                 Returns:
                         tasks (List[Task] | None): An array of tasks returned from Mongo expressed as an instance of the Task class
         '''
-        tasks = list(self.mongo.aggregate([{ '$sample': { 'size': amount } }]))
+        # tasks = list(self.mongo.aggregate([{ '$sample': { 'size': amount } }]))
+        tasks = list(self.mongo.find().limit(amount))
         logging.info(f'Getting {len(tasks)} task(s)...')
         return [to_task(task) for task in tasks]
