@@ -132,4 +132,4 @@ dmypy.json
 /credentials
 credentials.json
 token.json
-data/Bookmarks
+/data

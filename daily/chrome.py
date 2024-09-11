@@ -1,82 +1,43 @@
 import logging
-from typing import List
-from pymongo import MongoClient
-from pymongo.collection import Collection
+logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.INFO)
 
 import json
 from os import environ
 from pathlib import Path
 
-from .classes.bookmark import Bookmark, to_bookmark
-
-from .utils import log_raw
+import pandas as pd
 
 class Chrome:
     def __init__(self):
-        self.mongo: Collection = MongoClient(environ["MONGO_URL"])['daily']['chrome']
+        self.bookmark_path: Path = Path.cwd() / 'data' / 'Bookmarks'
+        self.data_path: Path = Path.cwd() / 'data' / 'chrome.json'
     
     def log_bookmarks(self, amount: int = None):
-        '''
-        Logs all bookmarks to Mongo
-
-                Parameters:
-                        amount (int): The number of bookmarks to log
-                Returns:
-                        bookmarks (list): An array of bookmarks
-        '''
-        # TODO: make this run a check
-        # bookmarks_file = Path.home() / Path("AppData\\Local\\Google\\Chrome\\User Data\\Default\\Bookmarks")
-        bookmarks_file = Path.cwd() / 'data' / 'Bookmarks'
-        folder_path = environ.get('CHROME_BOOKMARKS_PATH').split('/')
-
-        logging.info(f'Reading bookmarks from {bookmarks_file}...')
-
-        with open(bookmarks_file, 'r', encoding='utf-8') as file:
-            bookmarks_data = json.load(file)
-
-        def find_folder(bookmarks, folder_path):
-            if not folder_path:
-                return bookmarks
-            current_folder_name = folder_path.pop(0)
-            for item in bookmarks:
-                if item['type'] == 'folder' and item['name'] == current_folder_name:
-                    return find_folder(item['children'], folder_path)
-            return []
-
-        bookmarks_list = []
-        for root_key in ['bookmark_bar', 'other', 'synced']:
-            root_bookmarks = bookmarks_data['roots'].get(root_key, {}).get('children', [])
-            bookmarks_list.extend(find_folder(root_bookmarks, folder_path.copy()))
-
-        for bookmark in bookmarks_list:
-            log_raw('chrome_raw', bookmark)
+        with open(self.bookmark_path, 'r', encoding='utf-8') as infile:
+            data = json.load(infile)
         
-        bookmarks = [{'title': bookmark['name'], 'url': bookmark['url']} for bookmark in bookmarks_list[:amount if amount is not None else len(bookmarks_list)] if bookmark.get('type') == 'url']        
-        bookmarks = [to_bookmark(bookmark) for bookmark in bookmarks]
+        logging.info(f'Importing bookmark(s) from {self.bookmark_path}...')
         
-        logging.info(f'Logging {len(bookmarks)} bookmark(s)...')
+        def extract(bookmarks):
+            return [b for bookmark in bookmarks for b in (extract(bookmark["children"]) if bookmark.get("type") == "folder" else [bookmark]) if b.get("type") == "url"]
+
+        all_urls = extract([child for root in data.get("roots", {}).values() if "children" in root for child in root["children"]])
         
-        self.mongo.insert_many([bookmark.__dict__ for bookmark in bookmarks])
+        with open(self.data_path, 'w') as outfile:
+            json.dump(all_urls, outfile, indent=4)
 
-    def get_bookmarks(self, with_screenshot: bool = False, amount: int = 2) -> List[Bookmark]:
-        '''
-        Returns an array of bookmarks
-
-                Parameters:
-                        amount (int): The number of bookmarks to get
-                Returns:
-                        bookmarks (List[Bookmark] | None): An array of bookmarks returned from Mongo expressed as an instance of the Bookmark class
-        '''
-        bookmarks = list(self.mongo.aggregate([{ '$sample': { 'size': amount } }]))
+    def get_bookmarks(self, with_screenshot: bool = False, amount: int = None):
+        logging.info(f'Getting bookmark(s) from {self.data_path}...')
+        bookmarks = pd.read_json(self.data_path)
         
-        if with_screenshot:
-            for i, bookmark in enumerate(bookmarks):
-                _id = bookmark['_id']
-                bookmark = to_bookmark(bookmark)
-                if bookmark.screenshot is None:
-                    bookmark.screenshot = bookmark.capture_screenshot()
-                    bookmarks[i]['screenshot'] = bookmark.screenshot
-                    self.mongo.update_one({'_id': _id}, {'$set': {'screenshot': bookmark.screenshot}})
+        # if with_screenshot:
+        #     for i, bookmark in enumerate(bookmarks):
+        #         _id = bookmark['_id']
+        #         bookmark = to_bookmark(bookmark)
+        #         if bookmark.screenshot is None:
+        #             bookmark.screenshot = bookmark.capture_screenshot()
+        #             bookmarks[i]['screenshot'] = bookmark.screenshot
+        #             self.mongo.update_one({'_id': _id}, {'$set': {'screenshot': bookmark.screenshot}})
 
-        logging.info(f'Getting {len(bookmarks)} bookmark(s)...')
-        return [to_bookmark(bookmark) for bookmark in bookmarks]
+        logging.info(f'Got {len(bookmarks)} bookmark(s)...')
+        return bookmarks

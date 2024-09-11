@@ -2,18 +2,15 @@
 from typing import List
 from praw import Reddit as Praw
 import logging
-from logging import INFO, DEBUG, ERROR
-from pymongo import MongoClient
-from pymongo.collection import Collection
 from os import environ
 
-from .classes.post import Post, to_post
+from pathlib import Path
+import json
 
-from .utils import log_raw
+import pandas as pd
 
 class Reddit:
     def __init__(self, target_subreddits: list = []):
-        self.mongo: Collection = MongoClient(environ["MONGO_URL"])['daily']['reddit']
         self.reddit = Praw(
             client_id = environ["REDDIT_CLIENT_ID"],
             client_secret = environ["REDDIT_CLIENT_SECRET"],
@@ -22,41 +19,22 @@ class Reddit:
             #username = environ["REDDIT_USERNAME"],
         )
         self.target_subreddits = target_subreddits
+        self.data_path: Path = Path.cwd() / 'data' / 'reddit.json'
 
     def log_posts(self, amount: int = 10):
-        '''
-        Logs all posts to Mongo
-
-                Parameters:
-                        amount (int): The number of posts to log
-                Returns:
-                        posts (list): An array of posts
-        '''
-        # TODO: optimise for memory + MongoDB
-
-        # posts = [post for subreddit in self.target_subreddits for post in self.reddit.subreddit(subreddit).hot(limit=amount)]
-        # posts = [to_post({'title': post.title, 'url': post.url}) for post in posts]
-
-        # logging.info(f'Logging {len(posts)} post(s)...')
-
-        # self.mongo.insert_many([post.__dict__ for post in posts])
+        all_posts = []
 
         logging.info(f'Logging {amount} post(s)...')
 
         for subreddit in self.target_subreddits:
             for post in self.reddit.subreddit(subreddit).hot(limit = amount):
-                log_raw('reddit_raw', post)
-                self.mongo.insert_one(to_post({'title': post.title, 'url': post.url}).__dict__)
+                all_posts.append({'title': post.title, 'url': post.url})
 
-    def get_posts(self, amount: int = 5) -> List[Post]:
-        '''
-        Returns an array of posts
+        with open(self.data_path, 'w') as outfile:
+            json.dump(all_posts, outfile, indent=4)
 
-                Parameters:
-                        amount (int): The number of posts to get
-                Returns:
-                        posts (List[Post] | None): An array of posts returned from Mongo expressed as an instance of the Post class
-        '''
-        posts = list(self.mongo.aggregate([{ '$sample': { 'size': amount } }]))
-        logging.info(f'Getting {len(posts)} posts(s)...')
-        return [to_post(post) for post in posts]
+    def get_posts(self, amount: int = None):
+        logging.info(f'Getting post(s) from {self.data_path}...')
+        posts = pd.read_json(self.data_path)
+        logging.info(f'Got {len(posts)} post(s)...')
+        return posts

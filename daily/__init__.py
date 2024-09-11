@@ -2,8 +2,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from .utils import log_raw
-
 from .classes.bookmark import Bookmark, to_bookmark
 from .classes.message import Message
 from .classes.pin import Pin
