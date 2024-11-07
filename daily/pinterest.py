@@ -30,7 +30,7 @@ class Pinterest:
 
         for board in self.boards:
             if board['name'] in self.target_boards:
-                logging.info(f'Getting pins from {board["name"]}...')
+                logging.info(f'Logging pins from {board["name"]}...')
                 rec_pins = []
                 rec_batch = self.pinterest.board_recommendations(board_id = board['id'])
                 while len(rec_batch) > 0 and len(rec_pins) < self.max_pins:

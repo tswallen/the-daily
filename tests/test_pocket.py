@@ -7,21 +7,17 @@ class PocketTestSuite(unittest.TestCase):
 
     pocket = daily.Pocket()
 
-    # def test_log_tasks(self):
-    #     self.assertIsNone(self.tasks.log_tasks())
-    #     documents = list(self.tasks.mongo.find({}))
-    #     self.assertIsNotNone(documents) # Assumes we have tasks
-    #     self.assertIsInstance(documents, list)
+    @unittest.skip("Skipping test that requires manual interaction")
+    def test_get_access_token(self):
+        access_token = self.pocket.get_access_token()
+        self.assertIsNotNone(access_token)
 
-    # def test_get_tasks(self):
-    #     tasks = self.tasks.get_tasks()
-    #     self.assertIsNotNone(tasks) # Assumes we have tasks
-    #     self.assertIsInstance(tasks, list)
-    #     self.assertIsInstance(tasks[0], daily.Task)
-    #     self.assertIsNotNone(tasks[0].title)
+    def test_log_items(self):
+        self.assertIsNone(self.pocket.log_items())
 
-    def test_log_pocket(self):
-        self.assertIsNone(self.pocket.log_pocket())
+    def test_get_items(self):
+        items = self.pocket.get_items()
+        self.assertIsNotNone(items) # Assumes we have items
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,5 +1,4 @@
 import logging
-logging.basicConfig(filename='example.log', encoding='utf-8', level=logging.INFO)
 
 import json
 from os import environ

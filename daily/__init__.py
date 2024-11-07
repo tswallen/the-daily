@@ -11,7 +11,7 @@ from .classes.task import Task
 
 from .chrome import Chrome
 from .discord import Discord
-# Instagram
+from .instagram import Instagram
 from .pinterest import Pinterest
 from .pocket import Pocket
 from .quotes import Quotes

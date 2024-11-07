@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Entries</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        td, th {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        iframe {
+            width: 200px;
+            height: 150px;
+        }
+        img {
+            width: 200px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- First Table: URLs and Names -->
+    <h2>Table 1: URLs and Names</h2>
+    <table>
+        <tr>
+            {% for item in items1 %}
+            <td>
+                <iframe src="{{ item['url'] }}" frameborder="0"></iframe>
+            </td>
+            {% endfor %}
+        </tr>
+        <tr>
+            {% for item in items1 %}
+            <td>
+                {{ item['name'] }}
+            </td>
+            {% endfor %}
+        </tr>
+    </table>
+
+    <!-- Second Table: Captions and Images -->
+    <h2>Table 2: Captions and Images</h2>
+    <table>
+        <tr>
+            {% for item in items2 %}
+            <td>
+                {{ item['caption'] }}
+            </td>
+            {% endfor %}
+        </tr>
+        <tr>
+            {% for item in items2 %}
+            <td>
+                <img src="data/instagram/{{ item['shortcode'] }}/{{ item['image_urls'][0] }}" alt="{{ item['caption'] }}">
+            </td>
+            {% endfor %}
+        </tr>
+    </table>
+
+</body>
+</html>
